@@ -1,0 +1,245 @@
+// programa para hacer funcionar la machina
+// V0.0 : Se definen los motores y la forma de acceder a cada uno
+//input limit swithc pruea
+//const int limit1 = 22;
+// V0.1 : se define el funcionamiento de los motores teniendo en cuenta la cantidad de pasos y una frecuencia de funcionamiento
+
+int limit1state = 0;
+
+String Mot;
+String Step;
+String Dir;
+
+
+// pin enable
+const int enable  = 52;
+const long Periodo = 5;
+const long Periodon = Periodo / 2;
+long ultimaVentana;
+long lastmillis;
+
+
+//motor 1
+const int step1 = 50;
+const int dir1  = 51;
+bool mot1 = false;
+
+
+//motor 2
+const int step2 = 48;
+const int dir2  = 49;
+bool mot2 = false;
+
+
+//motor 3
+const int step3 = 46;
+const int dir3  = 47;
+bool mot3 = false;
+
+
+//motor 4
+const int step4 = 44;
+const int dir4  = 45;
+bool mot4 = false;
+
+
+//motor 5
+const int step5 = 42;
+const int dir5  = 43;
+bool mot5 = false;
+
+
+//motor 6
+const int step6 = 40;
+const int dir6  = 41;
+bool mot6 = false;
+
+
+void setup() {
+  // put your setup code here, to run once:
+
+  //  pinMode(limit1, INPUT);
+
+  pinMode(step1, OUTPUT);
+  pinMode(dir1, OUTPUT);
+
+  pinMode(step2, OUTPUT);
+  pinMode(dir2, OUTPUT);
+
+  pinMode(step3, OUTPUT);
+  pinMode(dir3, OUTPUT);
+
+  pinMode(step4, OUTPUT);
+  pinMode(dir4, OUTPUT);
+
+  pinMode(step5, OUTPUT);
+  pinMode(dir5, OUTPUT);
+
+  pinMode(step6, OUTPUT);
+  pinMode(dir6, OUTPUT);
+
+  pinMode(enable, OUTPUT);
+  digitalWrite(enable, HIGH);
+  digitalWrite(dir6, LOW);
+
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  if ejecutar(paso) == true{
+    paso += 1;
+    ejecutar();
+    if (millis() - lastmillis < 1000) {
+      mot6 = true;
+      mot5 = false;
+    }
+    else if (millis() - lastmillis < 2000) {
+      mot6 = false;
+      mot5 = true;
+    }
+    else{
+      lastmillis = millis();
+    }
+  }
+}
+
+void ejecutar() {
+  if (millis() - ultimaVentana < Periodon ) {
+    if (mot1) {
+      digitalWrite(step1, HIGH);
+    }
+    if (mot2) {
+      digitalWrite(step2, HIGH);
+    }
+    if (mot3) {
+      digitalWrite(step3, HIGH);
+    }
+    if (mot4) {
+      digitalWrite(step4, HIGH);
+    }
+    if (mot5) {
+      digitalWrite(step5, HIGH);
+    }
+    if (mot6) {
+      digitalWrite(step6, HIGH);
+    }
+
+  }
+  else if (millis() - ultimaVentana <  Periodo) {
+
+
+    if (mot1) {
+      digitalWrite(step1, LOW);
+    }
+    if (mot2) {
+      digitalWrite(step2, LOW);
+    }
+    if (mot3) {
+      digitalWrite(step3, LOW);
+    }
+    if (mot4) {
+      digitalWrite(step4, LOW);
+    }
+    if (mot5) {
+      digitalWrite(step5, LOW);
+    }
+    if (mot6) {
+      digitalWrite(step6, LOW);
+    }
+  }
+  else {
+    ultimaVentana = millis();
+  }
+}
+bool mov1Mot(int nSteps , long periodo) {
+  // esta funcion evalua los tiempos y sube y baja las salidas digitales asociadas al motor uno hasta que se cumplen
+  // los nSteps, entonces retorna True y reinicializa la variable cont1 (numero de pasos)
+  // nota1: se debe dejar de llamar desde afuera dado que al reiniciar el numero de pasos entonces quedaria funcionando hasta el infinito
+   
+  if (cont1 < nSteps && mot1) {
+    if (millis() - ultiVent1 < Periodon ) {
+      digitalWrite(step1, HIGH);
+      return false
+    }
+    else if (millis() - ultiVent1 <  periodo) {
+      digitalWrite(step1, LOW);
+      return false;
+    }
+    else {
+      ultiVent1 = millis();
+      cont1++;
+      return false;
+    }
+  }
+  else {
+    cont1 = 0;
+    mot1=false;
+    return true;
+  }
+}
+
+bool mov6Mot(int nSteps , long periodo) {
+  // esta funcion evalua los tiempos y sube y baja las salidas digitales asociadas al motor uno hasta que se cumplen
+  // los nSteps, entonces retorna True y reinicializa la variable cont1 (numero de pasos)
+  // nota1: se debe dejar de llamar desde afuera dado que al reiniciar el numero de pasos entonces quedaria funcionando hasta el infinito
+   
+  if (cont1 < nSteps && mot6) {
+    if (millis() - ultiVent6 < Periodon ) {
+      digitalWrite(step6, HIGH);
+      return false
+    }
+    else if (millis() - ultiVent6 <  periodo) {
+      digitalWrite(step6, LOW);
+      return false;
+    }
+    else {
+      ultiVent6 = millis();
+      cont1++;
+      return false;
+    }
+  }
+  else {
+    cont6 = 0;
+    mot6=false;
+    return true;
+  }
+}
+
+
+bool mov5Mot(int nSteps , long periodo) {
+  // esta funcion evalua los tiempos y sube y baja las salidas digitales asociadas al motor uno hasta que se cumplen
+  // los nSteps, entonces retorna True y reinicializa la variable cont1 (numero de pasos)
+  // nota1: se debe dejar de llamar desde afuera dado que al reiniciar el numero de pasos entonces quedaria funcionando hasta el infinito
+   
+  if (cont1 < nSteps && mot5) {
+    if (millis() - ultiVent5 < Periodon ) {
+      digitalWrite(step5, HIGH);
+      return false
+    }
+    else if (millis() - ultiVent5 <  periodo) {
+      digitalWrite(step5, LOW);
+      return false;
+    }
+    else {
+      ultiVent5 = millis();
+      cont1++;
+      return false;
+    }
+  }
+  else {
+    cont5 = 0;
+    mot5=false;
+    return true;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
