@@ -26,11 +26,11 @@ uint8_t periodoCable;
 uint8_t periodo_enrol;
 uint8_t periodo_meandl;
 
-uint8_t steps_gancho;
-uint8_t steps_gancho_corte;
-uint8_t steps_cable;
-uint8_t steps_enrol;
-uint8_t steps_meand;
+uint16_t steps_gancho;
+uint16_t steps_gancho_corte;
+uint16_t steps_cable;
+uint16_t steps_enrol;
+uint16_t steps_meand;
 
 
 // pin enable
