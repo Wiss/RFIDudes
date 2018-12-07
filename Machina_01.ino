@@ -1,7 +1,5 @@
 // programa para hacer funcionar la machina
 // V0.0 : Se definen los motores y la forma de acceder a cada uno
-//input limit swithc pruea
-//const int limit1 = 22;
 // V0.1 : se define el funcionamiento de los motores teniendo en cuenta la cantidad de pasos y una frecuencia de funcionamiento
 
 int limit1state = 0;
