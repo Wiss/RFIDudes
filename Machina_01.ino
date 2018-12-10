@@ -2,34 +2,35 @@
 // V0.0 : Se definen los motores y la forma de acceder a cada uno
 // V0.1 : se define el funcionamiento de los motores teniendo en cuenta la cantidad de pasos y una frecuencia de funcionamiento
 
-int limit1state = 0;
-
 // Disponibles para limit switch pines 22 al 31
 
-#define LS_izq 22
+#define LS_izq  22
 #define LS_frnt 23 
-#define LS_der 24
+#define LS_der  24
 #define LS_tras 25
 
 
 bool warning = false;
 
-uint8_t PasosTotales = 6;
-uint8_t  Paso;
+long pasos_totales = 6;
 
-uint16_t Periodo = 10; 
-uint16_t Periodon = Periodo/2;
-uint8_t  periodoRetract = Periodo*2;
-uint8_t periodoCable;
-uint8_t periodo_enrol;
-uint8_t periodo_meandl;
+uint16_t periodo         = 10; 
+uint16_t periodon        = periodo/2;
+int  periodo_retract = periodo*2;
+long  periodo_gancho  = periodo;
+long  periodo_cable   = periodo;
+long  periodo_enrol   = periodo;
+long  periodo_meand  = periodo;
+long  periodo_solid_enrol;
+long  periodo_solid_meand;
 
-uint16_t steps_gancho;
-uint16_t steps_gancho_corte;
-uint16_t steps_cable;
-uint16_t steps_enrol;
-uint16_t steps_meand;
-
+int steps_gancho;
+int steps_gancho_corte;
+int steps_cable;
+int steps_enrol;
+int steps_meand;
+int  steps_solid_enrol;
+int  steps_solid_meand;
 
 // pin enable
 const int enable  = 52;
@@ -142,7 +143,7 @@ void setup() {
 
 void loop() {
 /*
-  for(int i = 0 ; i <= PasosTotales ; i++){ 
+  for(int i = 0 ; i <= pasos_totales ; i++){ 
     if(LS_izq == HIGH || LS_tras == HIGH){
         warning = 9;
         break;
@@ -171,29 +172,29 @@ void ejecutar(int Paso) {
     mot8 = true;
     mot9 = true;
 
-
 //Seteo dirección deseada de motores involucrados
-    digitalWrite(dir8, HIGH); //eje Y
-    digitalWrite(dir9, HIGH); //eje X
+    digitalWrite(dir8, HIGH); //eje Y hacia adelante
+    digitalWrite(dir9, HIGH); //eje X hacia la izquierda
 
                
 //Motor 8 se mueve hasta limit switch frontal  
     while (digitalRead(LS_frnt)){ 
-      mov8Mot(Periodo);
+      mov8Mot(periodo);
       if(LS_izq == HIGH || LS_der == HIGH || LS_tras== HIGH){
         warning = 88;
         break;
       }
     }
     if(warning != 0){
-      break;
+      //Imprimir número de warning en serial o pantalla
+      exit(0);
     }
 //Motor 8 se devuelve una cantidad determinada de pasos para no tocar el limit switch
     digitalWrite(dir8, LOW); //dirección opuesta a la definida anteriormente
     //mot8 = true;
     cont8 = 0;
     while(true){
-    mov8Mot(10,periodoRetract);
+    mov8Mot(10,periodo_retract);
     if(mot8 = false){
       break;  
     }
@@ -201,21 +202,21 @@ void ejecutar(int Paso) {
     
 //Motor 9 se mueve hasta limit switch izquierdo
     while (!digitalRead(LS_izq)){
-      mov9Mot(Periodo);
+      mov9Mot(periodo);
       if(LS_der == HIGH || LS_tras == HIGH || LS_frnt== HIGH){
         warning = 88;
         break;
       }
     }
     if(warning != 0){
-      break;
+      exit(0);
     }
 //Motor 9 se devuelve una cantidad determinada de pasos para no tocar el limit switch
     digitalWrite(dir9, LOW);
     //mot9 = true;
     cont9 = 0;
     while(true){
-      mov9Mot(10,periodoRetract); 
+      mov9Mot(10,periodo_retract); 
       if(mot9 = false){
         break;  
       }
@@ -242,21 +243,21 @@ void ejecutar(int Paso) {
 
     
 //Seteo dirección deseada de motores involucrados
-    digitalWrite(dir8, LOW); //eje Y
-    digitalWrite(dir9, LOW); //eje X
-    digitalWrite(dir2, LOW); //Gancho derecho
-    digitalWrite(dir3, LOW); //Gancho izquierdo
+    digitalWrite(dir8, LOW); //eje Y hacia atras
+    digitalWrite(dir9, LOW); //eje X hacia la derecha
+    digitalWrite(dir2, LOW); //Gancho derecho hacia afuera
+    digitalWrite(dir3, LOW); //Gancho izquierdo hacia afuera
                
 //Motor 8 se mueve hasta limit switch trasero    
     while (!digitalRead(LS_tras)){ //&& mov9Mot()
-      mov8Mot(periodo8);
+      mov8Mot(periodo);
       if(LS_izq == HIGH || LS_der == HIGH || LS_frnt== HIGH){
         warning = 1;
         break;
       }
     }
     if(warning != 0){
-      break;
+      exit(0);
     }
 //Motor 8 se devuelve una cantidad determinada de pasos para no tocar el limit switch
     digitalWrite(dir8, HIGH); //dirección opuesta a la definida anteriormente
@@ -271,14 +272,14 @@ void ejecutar(int Paso) {
     
 //Motor 9 se mueve hasta limit switch derecho
     while (!digitalRead(LS_der)){
-      mov9Mot(periodo9);
+      mov9Mot(periodo);
       if(LS_izq == HIGH || LS_tras == HIGH || LS_frnt== HIGH){
         warning = 1;
         break;
       }
     }
     if(warning != 0){
-      break;
+      exit(0);
     }
 //Motor 9 se devuelve una cantidad determinada de pasos para no tocar el limit switch
     digitalWrite(dir9, HIGH);
@@ -290,7 +291,7 @@ void ejecutar(int Paso) {
         break;  
       }
     }
-    //mov8mot(10,periodoRetract);   esta demas(?)
+    //mov8mot(10,periodo_retract);   esta demas(?)
     
 //Se abren ganchos
 
@@ -299,14 +300,14 @@ void ejecutar(int Paso) {
       warning = 1;
       break;
     }
-    mov2mot(steps_gancho, periodo2);
-    mov3mot(steps_gancho, periodo3);
+    mov2Mot(steps_gancho, periodo_gancho);
+    mov3Mot(steps_gancho, periodo_gancho);
       if(mot2 == false && mot3 == false){
         break;
       }
     }
     if(warning != 0){
-      break;
+      exit(0);
     }
     mot8 = false;
     mot9 = false;
@@ -331,13 +332,13 @@ void ejecutar(int Paso) {
       warning = 2;
       break;
     }
-    mov3mot(steps_gancho, periodo3);
+    mov3Mot(steps_gancho, periodo_gancho);
       if(mot3 == false){
         break;
       }
     }
     if(warning != 0){
-      break;
+      exit(0);
     }
 //Estirar cable hasta la izquierda
 
@@ -346,13 +347,13 @@ void ejecutar(int Paso) {
       warning = 2;
       break;
     }
-    mov9Mot(steps_cable, periodoCable);
+    mov9Mot(steps_cable, periodo_cable);
       if(mot9 == false){
         break;
       }
     }
     if(warning != 0){
-      break;
+      exit(0);
     }
 //Cerrar gancho derecho para cortar - agarrar cable
 
@@ -362,13 +363,13 @@ void ejecutar(int Paso) {
       warning = 2;
       break;
     }
-    mov2mot(steps_gancho, periodo2);
+    mov2Mot(steps_gancho, periodo_gancho);
       if(mot2 == false){
         break;
       }
     }
     if(warning != 0){
-      break;
+      exit(0);
     }
 
 //Desactivar motores  
@@ -385,23 +386,25 @@ void ejecutar(int Paso) {
  **************/
  
   if (Paso == 3){
-    mot8 = true;
+    
     mot4 = true;
     mot5 = true;
+    mot8 = true;
+    
     //Seteo dirección deseada de motores involucrados
     digitalWrite(dir4, LOW); //Enrollador derecho
     digitalWrite(dir5, LOW); //Enrollador izquierdo
 
 //Motor 8 se mueve hasta limit switch frontal 
     while (!digitalRead(LS_frnt)){ 
-      mov8Mot(periodo8);
+      mov8Mot(periodo);
       if(LS_izq == HIGH || LS_der == HIGH || LS_tras== HIGH){
         warning = 3;
         break;
       }
     }
     if(warning != 0){
-      break;
+      exit(0);
     }
 
 //Motor 4 y 5 enrollan 360 y 9 se mueve solidareamente
@@ -411,9 +414,9 @@ void ejecutar(int Paso) {
       warning = 3;
       break;
     }
-    mov4mot(steps_enrol, periodo_enrol);
-    mov5mot(steps_enrol, periodo_enrol);
-    perido_solid_enrol = periodo_enrol*4/31.5; //steps_enrol*periodo_enrol = steps_solid_enrol*periodo_solid_enrol
+    mov4Mot(steps_enrol, periodo_enrol);
+    mov5Mot(steps_enrol, periodo_enrol);
+    periodo_solid_enrol = periodo_enrol*4/31.5; //steps_enrol*periodo_enrol = steps_solid_enrol*periodo_solid_enrol
     steps_solid_enrol = steps_enrol*31.5/4; //Por cada vuelta del motor 4 y 5 se avanzan 31.5*2 mm. Entonces, el mot9 necesita 31.5*2/8 vueltas (8 mm por vuelta mot 9)
     mov9Mot(steps_solid_enrol, periodo_solid_enrol);
       if(mot4 == false && mot5 == false && mot9 == false){
@@ -421,14 +424,14 @@ void ejecutar(int Paso) {
       }
     }
     if(warning != 0){
-      break;
+      exit(0);
     }
 
 //Desactivar motores  
 
-    mot8 = false;
     mot4 = false;
     mot5 = false;
+    mot8 = false;
     
   }//paso 3
 
@@ -454,9 +457,9 @@ void ejecutar(int Paso) {
       warning = 4;
       break;
     }
-    mov6mot(steps_meand, periodo_meand);
-    mov7mot(steps_meand, periodo_meand);
-    perido_solid_meand = (periodo_meand*2/9.56)*1.01; //steps_meand*periodo_meand = steps_solid_meand*periodo_solid_meand. Agregar un factor de seguridad
+    mov6Mot(steps_meand, periodo_meand);
+    mov7Mot(steps_meand, periodo_meand);
+    periodo_solid_meand = (periodo_meand*2/9.56)*1.01; //steps_meand*periodo_meand = steps_solid_meand*periodo_solid_meand. Agregar un factor de seguridad
     steps_solid_meand = steps_meand*9.56/2; //Por cada vuelta del motor 6 y 7 se avanzan ((15.56-6)*2)*2 mm. Entonces, el mot9 necesita 9.56*2*2/8 vueltas (8 mm por vuelta mot 9)
     mov9Mot(steps_solid_meand, periodo_solid_meand);
       if(mot6 == false && mot7 == false && mot9 == false){
@@ -464,19 +467,19 @@ void ejecutar(int Paso) {
       }
     }
     if(warning != 0){
-      break;
+      exit(0);
     }
 
     //Motor 9 se mueve hasta limit switch derecho para terminar central loop 
     while (!digitalRead(LS_der)){ 
-      mov9Mot(periodo9);
+      mov9Mot(periodo);
       if(LS_izq == HIGH || LS_frnt== HIGH){
         warning = 1;
         break;
       }
     }
     if(warning != 0){
-      break;
+      exit(0);
     }
 
  //Desactivar motores
@@ -491,7 +494,7 @@ void ejecutar(int Paso) {
  
   if (Paso == 5){
 
-//Inicializar motores
+//Soldadura
 
 
 }
@@ -516,34 +519,34 @@ void ejecutar(int Paso) {
       warning = 6;
       break;
     }
-    mov6mot(steps_meand/3, periodo_meand);
-    mov7mot(steps_meand/3, periodo_meand);
+    mov6Mot(steps_meand/3, periodo_meand);
+    mov7Mot(steps_meand/3, periodo_meand);
       if(mot6 == false && mot7 == false){
         break;
       }
     }
     if(warning != 0){
-      break;
+      exit(0);
     }
 
     digitalWrite(dir8, LOW); //eje Y
     //Motor 8 se mueve hasta limit switch trasero    
     while (!digitalRead(LS_tras)){ //&& mov9Mot()
-      mov8Mot(periodo8);
+      mov8Mot(periodo);
       if(LS_izq == HIGH || LS_tras == HIGH){
         warning = 6;
         break;
       }
     }
     if(warning != 0){
-      break;
+      exit(0);
     }
     //Motor 8 se devuelve una cantidad determinada de pasos para no tocar el limit switch
     digitalWrite(dir8, HIGH); //dirección opuesta a la definida anteriormente
     //mot8 = true;
     cont8 = 0;
     while(true){
-    mov8Mot(10,periodoRetract);
+    mov8Mot(10,periodo_retract);
     if(mot8 = false){
       break;  
     }
@@ -554,17 +557,17 @@ void ejecutar(int Paso) {
 
     while(true){
     if(LS_izq == HIGH || LS_tras == HIGH){
-      warning = 1;
+      warning = 6;
       break;
     }
-    mov2mot(steps_gancho_corte, periodo2);
-    mov3mot(steps_gancho_corte, periodo3);
+    mov2Mot(steps_gancho_corte, periodo_gancho);
+    mov3Mot(steps_gancho_corte, periodo_gancho);
       if(mot2 == false && mot3 == false){
         break;
       }
     }
     if(warning != 0){
-      break;
+      exit(0);
     }
 
 //Se abre ganchos
@@ -572,34 +575,34 @@ void ejecutar(int Paso) {
     digitalWrite(dir3, LOW); //Gancho izquierdo
     while(true){
     if(LS_izq == HIGH || LS_tras == HIGH){
-      warning = 1;
+      warning = 6;
       break;
     }
-    mov2mot(steps_gancho+steps_gancho_corte, periodo2);
-    mov3mot(steps_gancho+steps_gancho_corte, periodo3);
+    mov2Mot(steps_gancho+steps_gancho_corte, periodo_gancho);
+    mov3Mot(steps_gancho+steps_gancho_corte, periodo_gancho);
       if(mot2 == false && mot3 == false){
         break;
       }
     }
     if(warning != 0){
-      break;
+      exit(0);
     }
 //Ganchos a posicion inicial
     digitalWrite(dir2, HIGH); //Gancho derecho
     digitalWrite(dir3, HIGH); //Gancho izquierdo
     while(true){
     if(LS_izq == HIGH || LS_tras == HIGH){
-      warning = 1;
+      warning = 6;
       break;
     }
-    mov2mot(steps_gancho, periodo2);
-    mov3mot(steps_gancho, periodo3);
+    mov2Mot(steps_gancho, periodo_gancho);
+    mov3Mot(steps_gancho, periodo_gancho);
       if(mot2 == false && mot3 == false){
         break;
       }
     }
     if(warning != 0){
-      break;
+      exit(0);
     }
 
  //Desactivar motores
