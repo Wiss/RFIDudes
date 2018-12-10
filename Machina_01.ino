@@ -24,11 +24,11 @@ long  periodo_meand  = periodo;
 long  periodo_solid_enrol;
 long  periodo_solid_meand;
 
-int steps_gancho;
-int steps_gancho_corte;
-int steps_cable;
-int steps_enrol;
-int steps_meand;
+int steps_gancho = 800;  // 0.75 mm/vuelta
+int steps_gancho_corte = 132; // 0.75 mm/vuelta. 2/3*200
+int steps_cable = 300/8*200;   // 8 mm/vuelta. 
+int steps_enrol = 200;  // una vuelta
+int steps_meand = 600;  // tres vueltas
 int  steps_solid_enrol;
 int  steps_solid_meand;
 
@@ -46,15 +46,15 @@ long cont1;
 long ultiVent1;
 
 //motor 2
-const int step2;
-const int dir2;
+const int step2 = 34; // MODIFICAR!
+const int dir2 = 35;  // MODIFICAR!
 bool mot2 = false;
 long cont2;
 long ultiVent2;
 
 //motor 3
-const int step3;
-const int dir3;
+const int step3 = 36;  // MODIFICAR!
+const int dir3 = 37; // MODIFICAR!
 bool mot3 = false;
 long cont3;
 long ultiVent3;
@@ -81,8 +81,8 @@ long cont6;
 long ultiVent6;
 
 //motor 7
-const int step7 ;
-const int dir7 ;
+const int step7 = 38;  // MODIFICAR!
+const int dir7 = 39;  // MODIFICAR!
 bool mot7 = false;
 long cont7;
 long ultiVent7;
