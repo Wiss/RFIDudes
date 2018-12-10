@@ -14,9 +14,9 @@ bool warning = false;
 
 long pasos_totales = 6;
 
-uint16_t periodo         = 10; 
-uint16_t periodon        = periodo/2;
-int  periodo_retract = periodo*2;
+int   periodo         = 10; 
+int   periodon        = periodo/2;
+int   periodo_retract = periodo*2;
 long  periodo_gancho  = periodo;
 long  periodo_cable   = periodo;
 long  periodo_enrol   = periodo;
