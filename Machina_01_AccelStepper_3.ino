@@ -2,7 +2,7 @@
 // V0.0 : Se definen los motores y la forma de acceder a cada uno
 // V0.1 : se define el funcionamiento de los motores teniendo en cuenta la cantidad de pasos y una frecuencia de funcionamiento con función movmot
 // V0.2 : Se utiliza librería AccelStepper para controlar motores. 
-//         ->Problema con motor 8 y limit switch en último paso
+//         ->Falta incluir mensajes de error por serial
 
 // Disponibles para limit switch pines 22 al 31
 
