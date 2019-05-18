@@ -1,3 +1,4 @@
+
 // Programa para controlar temperatura en maquina vulcanizadora.
 // Versión 0 : Se lee la temperatura y se envía al seríal para plotear y se imprime en la pantalla
 
@@ -16,11 +17,16 @@ int thermoDO = 12;     //MISO
 int thermo1CS =4 ;
 int thermo2CS = 5;
 int thermo3CS = 6;
+int thermoUpCS = 7;
 
 MAX6675 tpar1(thermoCLK, thermo1CS, thermoDO);
 MAX6675 tpar2(thermoCLK, thermo2CS, thermoDO);
 
 MAX6675 tpar3(thermoCLK, thermo3CS, thermoDO);
+
+
+MAX6675 tparUp(thermoCLK, thermoUpCS, thermoDO);
+
 //falta incluir sensor arriba
 double temp1, temp2, temp3, tempup;
 
@@ -35,8 +41,8 @@ double setpoint, out1, out2, out3, outup;
 #define RELAY_PIN3 10
 #define RELAY_PINup 11
 
-double kp = 1;
-double ki = 10;
+double kp = 0.1;
+double ki = 0.5;
 double kd = 0;
 
 PID pid1(&temp1, &out1, &setpoint, kp, ki, kd, DIRECT);
@@ -135,7 +141,7 @@ void loop() {
     temp1 = tpar1.readCelsius();
     temp2 = tpar2.readCelsius();
     temp3 = tpar3.readCelsius();
-
+    tempup = tparUp.readCelsius();
     //Calcular salida pid
     pid1.Compute();
     pid2.Compute();
@@ -145,7 +151,7 @@ void loop() {
 
     //imprimir temperaturas y setpoint a la pantalla
 
-    imprimir(temp1, temp2, temp3, 104.2, setpoint);
+    imprimir(temp1, temp2, temp3, tempup, setpoint);
 
     //
     Serial.print("t1=");
@@ -206,3 +212,6 @@ void imprimir(float t1, float t2, float t3, float t4, float ref) {
   lcd.print(s);
 
 }
+
+
+
