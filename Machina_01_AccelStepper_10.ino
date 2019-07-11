@@ -6,12 +6,18 @@
 
 // Disponibles para limit switch pines 22 al 31
 
-#define LS_frnt 22
-#define LS_izq  23
-#define LS_der  24
-#define LS_tras 25
-#define LS_gan_der 26 
-#define LS_gan_izq 27
+//#define LS_frnt 22
+#define LS_frnt 28
+//#define LS_izq  23
+#define LS_izq  29
+//#define LS_der  24
+#define LS_der  26
+//#define LS_tras 25
+#define LS_tras 27
+//#define LS_gan_der 26 
+#define LS_gan_der 24 
+//#define LS_gan_izq 27
+#define LS_gan_izq 25
 
 #include <AccelStepper.h>
 #include  <Wire.h>                      //libreria para protocolo I2C
@@ -22,11 +28,13 @@ int warning = 0;
 long pasos_totales = 6;
 
 int steps_retract = -100;
+int steps_feed = -200;
+int steps_retract_mot9 = 16 / 8 * 200 ; // parametro utilizado para separarse el limit switch derecho al momento de soltar la antena
 int steps_retract_gancho = 20;
-int steps_gancho_izq  = 1800;        // 1.25 mm/vuelta.
+int steps_gancho_izq  = 1700;        // 1.25 mm/vuelta.
 int steps_gancho_der  = 1600;        // 1.25 mm/vuelta.
-int steps_gancho_corte = 240;   // 1.25 mm/vuelta.
-int steps_cable = 196 / 8 * 200 ; // 8 mm/vuelta. Distancia recorrida por motor 8 (eje X). Define el largo del cable 
+int steps_gancho_corte = 50;   // 1.25 mm/vuelta.
+int steps_cable = 191 / 8 * 200 ; // 8 mm/vuelta. Distancia recorrida por motor 8 (eje X). Define el largo del cable 
 int steps_enrol = 600;          // una vuelta considerando reducción 
 int steps_meand = 2760;          // tres vueltas
 int steps_meand_fin = 920;          // una vueltas
@@ -40,6 +48,7 @@ long  vel         = 1000;
 long  vel_cable   = vel;
 long  vel_retract = vel / 2;
 long  vel_gancho  = vel;
+long  vel_feed   = vel/4;
 // relaciones velocidad enrolamiento end-loads
 float vel_solid_enrol = vel;     //steps_enrol*vel_enrol = steps_solid_enrol*vel_solid_enrol
 float vel_enrol = (vel_solid_enrol * steps_enrol / steps_solid_enrol); 
@@ -47,7 +56,7 @@ float vel_enrol = (vel_solid_enrol * steps_enrol / steps_solid_enrol);
 // relacione velocidad meandros
 // con reductora
 float vel_meand = vel; // aqui esta la restriccion de mayor velocidad para la machina dado el REDUCTOR
-float vel_solid_meand = 0.65*(vel_meand * steps_solid_meand / steps_meand);  // CON reductora  // ESTABA EN 0.63
+float vel_solid_meand = 0.69*(vel_meand * steps_solid_meand / steps_meand);  // CON reductora  // ESTABA EN 0.63
 // sin Reductora
 //float vel_meand = (vel_solid_meand * steps_meand / steps_solid_meand);  // utilizar esta relación sólo si vel_solid_meand = vel
 //float vel_solid_meand = vel;  // SIN reductora
@@ -55,42 +64,56 @@ float vel_solid_meand = 0.65*(vel_meand * steps_solid_meand / steps_meand);  // 
 int acel = 2*vel;                 //Aceleración igual para todos los motores
 int acel_gancho = 3*vel;                 //Aceleración igual para todos los motores
 long pasos_LS = 1000000;          //Número de pasos grande para while(!LS)
+int acel_feed = 2*vel_feed; 
 
 // pin enable
-const int enable  = 30;
+const int enable  = 53;
 long ultimaVentana;
 long lastmillis;
 
 
+// MOTORES: (Simple_MODE, STEP, DIR). Step siempre numero menor
+
 //motor 1, 1.7A
-AccelStepper stepper1(1, 52, 53); // (Simple_MODE, STEP, DIR). Step siempre numero menor
+//AccelStepper stepper1(1, 52, 53); // FEEDER
+AccelStepper stepper1(1, 46, 47); // FEEDER
 
 //motor 2, 1.7A
-AccelStepper stepper2(1, 50, 51); // DERECHO
+//AccelStepper stepper2(1, 50, 51); // GANCHO DERECHO
+AccelStepper stepper2(1, 42, 43); // GANCHO DERECHO
 
 //motor 3, 1.7A
-AccelStepper stepper3(1, 48, 49);  // IZQUIERDO
+//AccelStepper stepper3(1, 48, 49);  // GANCHO IZQUIERDO
+AccelStepper stepper3(1, 38, 39);  // GANCHO IZQUIERDO
+
 
 //motor 4, 2A
-AccelStepper stepper4(1, 46, 47);
+//AccelStepper stepper4(1, 46, 47); // ENRROLLADOR DERECHO
+AccelStepper stepper4(1, 34, 35); // ENRROLLADOR DERECHO
 
 //motor 5, 2A
-AccelStepper stepper5(1, 44, 45);
+//AccelStepper stepper5(1, 44, 45); // ENRROLLADOR IZQUIERDO
+AccelStepper stepper5(1, 48, 49); // ENRROLLADOR IZQUIERDO
 
 //motor 6, 2A
-AccelStepper stepper6(1, 42, 43);
+//AccelStepper stepper6(1, 42, 43); // MEANDROS DERECHO
+AccelStepper stepper6(1, 44, 45); // MEANDROS DERECHO
 
 //motor 7, 2A
-AccelStepper stepper7(1, 40, 41);
+//AccelStepper stepper7(1, 40, 41); // MEANDROS IZQUIERDO
+AccelStepper stepper7(1, 40, 41); // MEANDROS IZQUIERDO
 
 //motor 8, 2A
-AccelStepper stepper8(1, 38, 39);
+//AccelStepper stepper8(1, 38, 39); // EJE Y
+AccelStepper stepper8(1, 36, 37); // EJE Y
 
 //motor 9, 2A
-AccelStepper stepper9(1, 36, 37);
+//AccelStepper stepper9(1, 36, 37); // EJE X
+AccelStepper stepper9(1, 32, 33); // EJE X
 
 //motor 10, 1.7A
-AccelStepper stepper10(1, 34, 35);
+//AccelStepper stepper10(1, 34, 35); 
+//AccelStepper stepper10(1, 34, 35); 
 
 
 //declarar pantalla LSD
@@ -113,55 +136,70 @@ void setup() {
   // Imprimir otra cadena en esta posicion
   //  lcd.print("RFIDUDES");
   // Esperar un
-  delay(2000);
+  delay(100);
+
+  // setup para ajustar feeder
+  stepper1.setMaxSpeed(vel_feed);
+  stepper1.setAcceleration(acel_feed);
+  stepper1.moveTo(steps_feed);    // Valor de steps negativo: alimenta machina.
 
   // setup para ajustar ganchos
   stepper2.setMaxSpeed(vel_gancho);
   stepper2.setAcceleration(acel_gancho);
-  stepper2.moveTo(-steps_gancho_der);    //DERECHO. positivo abre, negativo .cierra steps_gancho_der
+  //
+  stepper2.moveTo(steps_gancho_der);    // DERECHO. positivo abre, negativo .cierra steps_gancho_der
+  //stepper2.moveTo(steps_gancho_corte);
+  //stepper2.moveTo(-20);
+  
   stepper3.setMaxSpeed(vel_gancho);
   stepper3.setAcceleration(acel_gancho);
-  stepper3.moveTo(0);    //IZQUIERDO. positivo abre, negativo cierra. steps_gancho_izq
+  //
+  stepper3.moveTo(-steps_gancho_izq);    // IZQUIERDO. positivo abre, negativo cierra. steps_gancho_izq
+  //stepper3.moveTo(steps_gancho_corte);
+  //stepper3.moveTo(-20); 
   
   // setup para ajustar motores 4 y 5 
   stepper4.setMaxSpeed(vel_enrol);
   stepper4.setAcceleration(acel);
-  stepper4.moveTo(steps_enrol);    //dirección en funcionamiento normal: positiva. 
+  stepper4.moveTo(3*steps_enrol);    // DERECHO. dirección en funcionamiento normal: positiva. 
+  
   stepper5.setMaxSpeed(vel_enrol);
   stepper5.setAcceleration(acel);
-  stepper5.moveTo(-steps_enrol);    //dirección en funcionamiento normal: negativa. 
-  
-  // setup para ajustar motores 9 
-  stepper9.setMaxSpeed(vel_cable);
-  stepper9.setAcceleration(acel);
-  stepper9.moveTo(1*200/8);    // positivo izquierdo, negativo derecho. steps_cable. X -> 8mm/vuelta. steps_cable
-  //steps_solid_enrol
-  //2*200/8
-
-  // setup para ajustar motores 8  
-  stepper8.setMaxSpeed(vel);
-  stepper8.setAcceleration(acel);
-  stepper8.moveTo(0);    //negativo a tras, positivo a front. Y -> 8mm/vuelta
+  stepper5.moveTo(-3*steps_enrol);    // IZQUIERDO. dirección en funcionamiento normal: negativa. 
   
   // setup para ajustar motores meandros (6 y 7)
   stepper6.setMaxSpeed(vel_meand);
   stepper6.setAcceleration(acel);
   stepper6.moveTo(-steps_meand/3);    //dirección en funcionamiento normal: negativa. steps_meand. DERECHO
-  //stepper6.moveTo(-1000);
+  //stepper6.moveTo(-40);
   
   stepper7.setMaxSpeed(vel_meand);
   stepper7.setAcceleration(acel);
   stepper7.moveTo(steps_meand/3);    //dirección en funcionamiento normal: positiva. steps_meand. IZQUIERDO
- 
-  //ejecutar(0);
-  //ejecutar(1);
-  //ejecutar(2);
-  //ejecutar(3);
-  //ejecutar(4);
-  //ejecutar(5);
-  //ejecutar(6);
-  //ejecutar(7); 
-  //ejecutar(8);
+
+  // setup para ajustar motores 8  
+  stepper8.setMaxSpeed(vel);
+  stepper8.setAcceleration(acel);
+  stepper8.moveTo(100);    //negativo a tras, positivo a front. Y -> 8mm/vuelta
+
+  // setup para ajustar motores 9 
+  stepper9.setMaxSpeed(vel_cable);
+  stepper9.setAcceleration(acel);
+  stepper9.moveTo(1*200/8);    // positivo izquierdo (abre), negativo derecho (cierra). steps_cable. X -> 8mm/vuelta. steps_cable
+  //steps_solid_enrol
+  //2*200/8
+    
+  //ejecutar(0); // HOME
+  //ejecutar(1); // ABRE GANCHOS
+  //ejecutar(2); // CORTE GANCHO IZQUIERDO Y ESTIRAMIENTO CABLE
+  //ejecutar(3); // CORTE GANCHO DERECHO
+  //MOVER EJE X (AUMENTA TENSION)
+  //ejecutar(4); // ACOPLE PIEZA TRASERA Y GANCHOS
+  //ejecutar(5); // CONSTRUYE END-LOADS
+  //ejecutar(6); // CONSTRUYE MEANDROS
+  //ejecutar(7); // CENTRAL LOOP
+  //ejecutar(8); // TERMINACIONES, APERTURA GANCHOS Y ENTREGA DE ANTENA
+  //ejecutar(9); // CIERRE GANCHOS
 
 }
 
@@ -177,9 +215,14 @@ void loop() {
 
 
   // para ajustar parametros/movimientos
+  //if (digitalRead(LS_frnt) || digitalRead(LS_izq) || digitalRead(LS_der) || digitalRead(LS_tras)) {
+        //Serial.println("error 88 break LS_frnt loop");
+  //}
   
+  //stepper1.run(); // FEEDER
+  //
   stepper2.run(); // GANCHO DER
-  stepper3.run(); // GANCHO IZQ
+  //stepper3.run(); // GANCHO IZQ
   //stepper4.run(); // GIRO DER
   //stepper5.run(); // GIRO IZQ
   //stepper6.run(); // MEANDRO DER
@@ -677,18 +720,7 @@ void ejecutar(int Paso) {
   *** PASO 8 ***
   **************/
 
-  if (Paso == 55) {
-    ;
-    //Soldadura
-
-
-  }//paso 8
-
-  /**************
-  *** PASO 9 ***
-  **************/
-
-  if (Paso == 8) { // CAMBIAR A 9
+  if (Paso == 8) { 
 
     stepper2.setCurrentPosition(0);
     stepper3.setCurrentPosition(0);
@@ -747,11 +779,10 @@ void ejecutar(int Paso) {
       exit(0);
     }
 
-    //Motor 9 se devuelve una cantidad determinada de pasos 
-
+    //Motor 9 se devuelve una cantidad determinada de pasos
     stepper9.setCurrentPosition(0);
     stepper9.setSpeed(vel_retract);
-    stepper9.moveTo(50);
+    stepper9.moveTo(steps_retract_mot9);
 
     while (true) {
       stepper9.run();
@@ -828,30 +859,6 @@ void ejecutar(int Paso) {
     if (warning != 0) {
       exit(0);
     }
-    //Ganchos a posicion inicial
-    stepper2.setCurrentPosition(0);
-    stepper2.setMaxSpeed(vel_gancho);
-    stepper2.setAcceleration(acel);
-    stepper2.moveTo(-steps_gancho_der); //REVISAR SENTIDOS
-
-    stepper3.setCurrentPosition(0);
-    stepper3.setMaxSpeed(vel_gancho);
-    stepper3.setAcceleration(acel);
-    stepper3.moveTo(-steps_gancho_der); //REVISAR SENTIDOS
-    while (true) {
-      if (digitalRead(LS_izq) || digitalRead(LS_tras) || digitalRead(LS_frnt) || digitalRead(LS_gan_izq) || digitalRead(LS_gan_der)) { //|| !digitalRead(LS_der)
-        warning = 9;
-        break;
-      }
-      stepper2.run();
-      stepper3.run();
-      if (!stepper2.run() && !stepper3.run()) {
-        break;
-      }
-    }
-    if (warning != 0) {
-      exit(0);
-    }
     
     //Soltar LS_der
     stepper9.moveTo(-steps_retract * 100);
@@ -875,6 +882,40 @@ void ejecutar(int Paso) {
       exit(0);
     }
 
+
+  }//paso 8
+
+  /**************
+   *** PASO 9 ***
+   **************/
+
+  if (Paso == 9) {
+    //Ganchos a posicion inicial
+    stepper2.setCurrentPosition(0);
+    stepper2.setMaxSpeed(vel_gancho);
+    stepper2.setAcceleration(acel);
+    stepper2.moveTo(-steps_gancho_der); 
+
+    stepper3.setCurrentPosition(0);
+    stepper3.setMaxSpeed(vel_gancho);
+    stepper3.setAcceleration(acel);
+    stepper3.moveTo(-steps_gancho_der); 
+
+    // se cierran ganchos
+    while (true) {
+      if (digitalRead(LS_izq) || digitalRead(LS_tras) || digitalRead(LS_frnt) || digitalRead(LS_gan_izq) || digitalRead(LS_gan_der) || digitalRead(LS_der)){
+        warning = 9;
+        break;
+      }
+      stepper2.run();
+      stepper3.run();
+      if (!stepper2.run() && !stepper3.run()) {
+        break;
+      }
+    }
+    if (warning != 0) {
+      exit(0);
+    }
 
   }//paso 9
 
